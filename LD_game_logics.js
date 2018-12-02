@@ -29,6 +29,9 @@ function create() {
 
     foods.enableBody = true;
     bugs.enableBody = true;
+    //bugs.onInputOver.add(over, this);
+
+
 
     game.physics.enable(bugs, Phaser.Physics.ARCADE);
 
@@ -46,7 +49,7 @@ function create() {
     //var f = foods.iterate('i',2 , Phaser.Group.RETURN_CHILD)
     //console.log(f.i)
     //for (var i = 0; i < nfood; i++) { Bug_cible(bugs.getAt(i)) }
-    //game.input.onDown.add(Bug_cible, this)
+    game.input.onDown.add(bug_kill, this)
     //var s =  Phaser.ArrayUtils.getRandomItem(foods)
 }
 
@@ -62,6 +65,21 @@ function create_food (nfood) {
     //console.log(Afood)
 }
 
+function bug_kill (){
+    for (var i = 0; i < nbugs; i++) {
+        bug = bugs.getAt(i)
+        if (Phaser.Rectangle.contains(bug.body, game.input.x, game.input.y))
+        {
+            nbugs--
+            bug.destroy();
+            if (nfoods >0){
+
+            }
+        }
+    }
+}
+
+
 function create_bugs(nbugs) {
     for (var i = 0; i < nbugs; i++) {
         rectangle.random(p);
@@ -70,9 +88,14 @@ function create_bugs(nbugs) {
         var run = bug.animations.add('run');
         bug.anchor.setTo(0.5, 0.5);
         bug.animations.play('run', 5, true)
+        var text = game.add.text(0, 0, "0", {font: "16px Arial", fill: "#f2e90a"});
+        bug.addChild(text);
         //bug.bulletAngleOffset = -90
     }
 }
+
+
+
 
 
 function Bug_cible(bug) { 
@@ -88,6 +111,7 @@ function collectFood (bug0, food) {
     var cible = food.n
     food.destroy();
     nfoods--
+    bug0.health++
     //Afood.splice(i, 1);
     //for (var i = 0;  i < nbugs; i++){        bug = bugs.getAt(i);        if (bug.cible = cible ){Bug_cible(bug)}    }
     bugs.forEach(function(bug) {          if (bug.cible == cible) {            
@@ -115,7 +139,9 @@ function update() {
         //console.log(bugs.getAt(i).cible)
         //game.physics.arcade.moveToObject(bugs.getAt(i), foods.iterate('i',bugs.getAt(i).cible , Phaser.Group.RETURN_CHILD),400);
         if (nfoods > 0){
-            bug  = bugs.getAt(i)
+            bug  = bugs.getAt(i);
+            speed = bug_speed *( 1 +bug.health * 40)
+            
             food = foods.iterate('n',bug.cible , Phaser.Group.RETURN_CHILD)
             if (food != Math.null) {
                 bug.rotation = game.physics.arcade.angleBetween(bug, food)+ Math.PI/2 ;
@@ -125,6 +151,8 @@ function update() {
             else {
                 //Bug_cible(bug);
             }
+            bug.scale.setTo(0.5+bug.health/10, 0.5+ bug.health/10)
+            //bug.text.rotation = 0
         }
         else {
             game.paused = true;
