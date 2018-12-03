@@ -14,11 +14,13 @@ var cursors;
 var foods;
 var score = 0;
 var scoreText;
-var nfoods = 20
-var nbugs = 5
+var nfoods = 200
+var nbugs = 20
 
 var Afood = []
-var bug_speed = 100
+var bug_speed = 50
+var Timer = 60
+var End = false
 
 
 function create() {
@@ -39,17 +41,27 @@ function create() {
     const w = game.world.width / r;
     const h = game.world.height / r ;
 
-    rectangle = new Phaser.Rectangle(1, 1, w-1, h-1);
+    rectangle = new Phaser.Rectangle(1, 1, w-1, h-10);
     p = new Phaser.Point()
 
 
     create_food(nfoods) 
     create_bugs(nbugs)
     bugs.forEach(function(bug) { Bug_cible(bug) } );
-    //var f = foods.iterate('i',2 , Phaser.Group.RETURN_CHILD)
+
+    
+    game.time.events.add(Phaser.Timer.SECOND * Timer, function (){});
+
+
+
     //console.log(f.i)
     //for (var i = 0; i < nfood; i++) { Bug_cible(bugs.getAt(i)) }
     game.input.onDown.add(bug_kill, this)
+    text2 = "- Sacrifice the bugs, the score is the size of the biggest bug = ";
+    style = { font: "20px Arial", fill: "#ff0044", align: "left" };
+    t = game.add.text(0, game.world.height - 30, text2 + score, style);
+
+    
     //var s =  Phaser.ArrayUtils.getRandomItem(foods)
 }
 
@@ -61,6 +73,8 @@ function create_food (nfood) {
         p.floor();
         var food = foods.create(p.x * 5, p.y * 5,'food');
         food.n = i 
+        var s = 0.5
+        food.scale.setTo(s, s)
     }
     //console.log(Afood)
 }
@@ -80,6 +94,7 @@ function bug_kill (){
 }
 
 
+
 function create_bugs(nbugs) {
     for (var i = 0; i < nbugs; i++) {
         rectangle.random(p);
@@ -88,14 +103,11 @@ function create_bugs(nbugs) {
         var run = bug.animations.add('run');
         bug.anchor.setTo(0.5, 0.5);
         bug.animations.play('run', 5, true)
-        var text = game.add.text(0, 0, "0", {font: "16px Arial", fill: "#f2e90a"});
-        bug.addChild(text);
+        //var text = game.add.text(0, 0, "0", {font: "16px Arial", fill: "#f2e90a"});
+        //bug.addChild(text);
         //bug.bulletAngleOffset = -90
     }
 }
-
-
-
 
 
 function Bug_cible(bug) { 
@@ -106,18 +118,23 @@ function Bug_cible(bug) {
     }   
 }
 
-function collectFood (bug0, food) {
+
+
+function collectFood (bug0, food) {    
 
     var cible = food.n
+    //game.time.events.stop()
+
     food.destroy();
     nfoods--
     bug0.health++
+    //bug0.tint = "0xff00ff"
     //Afood.splice(i, 1);
     //for (var i = 0;  i < nbugs; i++){        bug = bugs.getAt(i);        if (bug.cible = cible ){Bug_cible(bug)}    }
     bugs.forEach(function(bug) {          if (bug.cible == cible) {            
         Bug_cible(bug)   
               } } );
-    Log()
+    //Log()
     //  Add and update the score
     //score += 10;
     //scoreText.text = 'Score: ' + score;
@@ -135,34 +152,44 @@ function Log (){
 
 
 function update() {
-    for (var i = 0;  i < nbugs; i++) {
-        //console.log(bugs.getAt(i).cible)
-        //game.physics.arcade.moveToObject(bugs.getAt(i), foods.iterate('i',bugs.getAt(i).cible , Phaser.Group.RETURN_CHILD),400);
-        if (nfoods > 0){
+    var Time = game.time.events.duration
+    a = []
+    if (nfoods > 0 && Time > 0){
+        for (var i = 0;  i < nbugs; i++) {
+                
             bug  = bugs.getAt(i);
-            speed = bug_speed *( 1 +bug.health * 40)
+            a.push(bug.health)
+            speed = bug_speed * ( 1 + bug.health * 0.1)
             
             food = foods.iterate('n',bug.cible , Phaser.Group.RETURN_CHILD)
+
             if (food != Math.null) {
                 bug.rotation = game.physics.arcade.angleBetween(bug, food)+ Math.PI/2 ;
-                game.physics.arcade.moveToObject(bug, food ,bug_speed);
+                game.physics.arcade.moveToObject(bug, food ,speed);
                 game.physics.arcade.overlap(bug, food , collectFood, null, this);
             }
             else {
-                //Bug_cible(bug);
+                Bug_cible(bug);
             }
-            bug.scale.setTo(0.5+bug.health/10, 0.5+ bug.health/10)
-            //bug.text.rotation = 0
+            bug.scale.setTo(0.5+bug.health/12, 0.5+ bug.health/12)
+            if (score < bug.health){ score = bug.health}           
         }
-        else {
-            game.paused = true;
-        }
-
-
-
-        //game.physics.arcade.overlap(bugs.getAt(i), foods.getAt(bugs.getAt(i).cible), collectFood, null, this);
-    }
-    //game.physics.arcade.overlap(bugs, foods, collectFood, null, this);
         
-        //if (Phaser.Rectangle.contains(bug.body, game.input.x, game.input.y))
+    }
+    
+
+    else {
+        End = true
+    } 
+
+    if (End){
+        t.setText(" GAME OVER     SCORE =  " + score +  "                Refresh for restart ");    
+        game.paused = true;
+    }
+    else {
+        t.setText(text2 + score +  "        TIMER  = " + (Math.floor (Time/100)) / 10);
+    }
+    console.log(nfoods)
+    //console.log(a)
+
 }
