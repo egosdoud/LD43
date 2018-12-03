@@ -21,6 +21,8 @@ var Afood = []
 var bug_speed = 50
 var Timer = 60
 var End = false
+var bmd ;
+var lsprite;
 
 
 function create() {
@@ -41,7 +43,7 @@ function create() {
     const w = game.world.width / r;
     const h = game.world.height / r ;
 
-    rectangle = new Phaser.Rectangle(1, 1, w-1, h-10);
+    rectangle = new Phaser.Rectangle(5, 5, w-5, h-10);
     p = new Phaser.Point()
 
 
@@ -51,7 +53,7 @@ function create() {
 
     
     game.time.events.add(Phaser.Timer.SECOND * Timer, function (){});
-
+    
 
 
     //console.log(f.i)
@@ -75,6 +77,9 @@ function create_food (nfood) {
         food.n = i 
         var s = 0.5
         food.scale.setTo(s, s)
+        food.anchor.setTo(0.5, 0.5);
+
+
     }
     //console.log(Afood)
 }
@@ -150,10 +155,35 @@ function Log (){
     console.log(b)
 }
 
+function Line(bug, food) {
+
+    if (lsprite) {
+                    lsprite.destroy()
+                }
+    bmd = game.add.bitmapData(game.world.width,game.world.height);
+    //lsprite = game.add.sprite(0, 0, bmd); 
+    
+    //bmd.ctx.clear();
+    bmd.ctx.beginPath(); 
+    bmd.ctx.lineWidth = "4"; 
+    bmd.ctx.strokeStyle = 'white'; 
+    bmd.ctx.setLineDash([2,3]);  
+    bmd.ctx.moveTo(bug.x, bug.y);   
+    bmd.ctx.lineTo(food.x , food.y);    
+    bmd.ctx.stroke();  
+    bmd.ctx.closePath();
+    lsprite = game.add.sprite(0, 0, bmd);
+}
+
 
 function update() {
+    var hasLine = false
     var Time = game.time.events.duration
     a = []
+    if(lsprite) {
+                lsprite.destroy()
+            }          
+        
     if (nfoods > 0 && Time > 0){
         for (var i = 0;  i < nbugs; i++) {
                 
@@ -162,8 +192,20 @@ function update() {
             speed = bug_speed * ( 1 + bug.health * 0.1)
             
             food = foods.iterate('n',bug.cible , Phaser.Group.RETURN_CHILD)
+            //food = foods.filter(food => food.n === bug.cible)
 
             if (food != Math.null) {
+                //food.scale.setTo(0.5, 0.5)
+                //lsprite.destroy()
+                //bmd.clear()
+
+                if (Phaser.Rectangle.contains(bug.body, game.input.x, game.input.y))
+                {
+                    //food.scale.setTo(2, 2)
+                    hasLine = true
+                    Line(bug,food)
+                }
+                
                 bug.rotation = game.physics.arcade.angleBetween(bug, food)+ Math.PI/2 ;
                 game.physics.arcade.moveToObject(bug, food ,speed);
                 game.physics.arcade.overlap(bug, food , collectFood, null, this);
@@ -172,7 +214,10 @@ function update() {
                 Bug_cible(bug);
             }
             bug.scale.setTo(0.5+bug.health/12, 0.5+ bug.health/12)
-            if (score < bug.health){ score = bug.health}           
+            if (score < bug.health){ score = bug.health} 
+            if(!hasLine && lsprite) {
+                //lsprite.destroy()
+            }          
         }
         
     }
@@ -189,7 +234,7 @@ function update() {
     else {
         t.setText(text2 + score +  "        TIMER  = " + (Math.floor (Time/100)) / 10);
     }
-    console.log(nfoods)
+    //console.log(nfoods)
     //console.log(a)
 
 }
